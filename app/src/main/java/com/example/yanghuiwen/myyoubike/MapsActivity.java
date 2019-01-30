@@ -14,9 +14,6 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.gson.Gson;
 
-import org.json.JSONException;
-import org.json.JSONObject;
-
 import java.util.Map;
 
 import androidx.fragment.app.FragmentActivity;
@@ -58,28 +55,17 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         Gson gson = new Gson();
         StationResponse station = gson.fromJson(jsonStr ,StationResponse .class);
         Map<String, Station> stations=station.getRetVal();
-        Log.i("test","obj sna:" + stations.get("2001").getSna());
-
+        try {
+            for (int i = 2001; i < 2010; i++) {
+                sydney = new LatLng(Double.valueOf(stations.get(i + "").getLat()), Double.valueOf(stations.get(i + "").getLng()));
+                mMap.addMarker(new MarkerOptions().position(sydney).title(stations.get(i + "").getSna()));
+            }
+        }catch (NullPointerException e){
+            e.printStackTrace();
+        }
 //        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P){
 //
 ////        }
-        Log.d("test","我進去了onMapReady");
-        try {
-
-             JSONObject all_bike_detail = bike_json.getData_JSONArray(bike_json.loadJSONFromAsset(getAssets(),"T_bike.json"));
-            Log.d("test","all_bike_detail="+ all_bike_detail);
-            for (int i = 2001; i < 2010; i++) {
-                JSONObject bike_detail = all_bike_detail.getJSONObject(i+"");
-                sydney = new LatLng(Double.valueOf(bike_detail.getString("lat")), Double.valueOf(bike_detail.getString("lng")));
-                //Log.i("test","lat="+bike_detail.getString("lat"));
-               // Log.i("test","lng="+bike_detail.getString("lng"));
-                mMap.addMarker(new MarkerOptions().position(sydney).title(bike_detail.getString("sna")));
-            }
-        }catch (JSONException e){
-            e.printStackTrace();
-            Log.d("test","我進去了JSONException");
-        }
-        // Add a marker in Sydney and move the camera
 
 
        mMap.moveCamera(CameraUpdateFactory.newLatLng(sydney));
