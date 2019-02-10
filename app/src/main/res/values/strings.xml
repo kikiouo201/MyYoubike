@@ -1,4 +1,7 @@
 <resources>
     <string name="app_name">MyYoubike</string>
     <string name="title_activity_maps">Map</string>
+    <string name="title_location_permission">1</string>
+    <string name="text_location_permission">2</string>
+    <string name="ok">3</string>
 </resources>
