@@ -12,6 +12,7 @@ import android.os.Bundle;
 import android.util.Log;
 import android.widget.Toast;
 
+import com.example.yanghuiwen.myyoubike.model.StationResponse;
 import com.example.yanghuiwen.myyoubike.util.Jsonutil;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -19,8 +20,11 @@ import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.gson.Gson;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
@@ -50,7 +54,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             mapFragment.getMapAsync(this);
         bike_json = new Jsonutil();
         lm = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-        List<String> list = lm.getProviders(true);
+
+        List<String> list = (lm != null) ? lm.getProviders(true) : new ArrayList<String>();
+        //lm 可能是null
 
         if (list.contains(LocationManager.NETWORK_PROVIDER)) {
             //是否为网络位置控制器
@@ -130,13 +136,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                         lm.requestLocationUpdates(provider, 400, 1,mLocationListener);
                     }
 
-                } else {
-
-                    // permission denied, boo! Disable the
-                    // functionality that depends on this permission.
-
                 }
-                return;
+
             }
 
         }
@@ -177,36 +178,52 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         public void onProviderDisabled(String s) {
         }
     };
-
+    double lat, lng;
 
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
-//        LatLng sydney = null;
-//        String jsonStr = bike_json.loadJSONFromAsset(getAssets(), "T_bike.json");
-//        Gson gson = new Gson();
-//        StationResponse station = gson.fromJson(jsonStr, StationResponse.class);
-//        Map<String, StationResponse.Station> stations = station.getRetVal();
-//        try {
-//            for (int i = 2001; i < 2010; i++) {
-//                sydney = new LatLng(Double.valueOf(stations.get(i + "").getLat()), Double.valueOf(stations.get(i + "").getLng()));
-//                mMap.addMarker(new MarkerOptions().position(sydney).title(stations.get(i + "").getSna()));
-//            }
-//        } catch (NullPointerException e) {
-//            e.printStackTrace();
-//        }
+
+        locationPoint();
+        int total = 0;
+        LatLng sydney = null;
+        String jsonStr = bike_json.loadJSONFromAsset(getAssets(), "T_bike.json");
+        Gson gson = new Gson();
+        StationResponse station = gson.fromJson(jsonStr, StationResponse.class);
+        Map<String, StationResponse.Station> stations = station.getRetVal();
+        Log.d("test", "lat=" + lat);
+        try {
+            for (int i = 2001; i <= 2248; i++) {
+                double aside = Double.valueOf(stations.get(i + "").getLat()) - lat;
+                double bside = Double.valueOf(stations.get(i + "").getLng()) - lng;
+//                Log.d("test","getLat="+stations.get(i + "").getLat());
+//                Log.d("test","a="+aside);
+//                Log.d("test","b="+bside);
+                double cside = Math.sqrt(aside * aside + bside * bside);
+//                Log.d("test","c="+cside);
+                if (cside <= 0.01) {
+                    sydney = new LatLng(Double.valueOf(stations.get(i + "").getLat()), Double.valueOf(stations.get(i + "").getLng()));
+                    mMap.addMarker(new MarkerOptions().position(sydney).title(stations.get(i + "").getSna()));
+                    total += 1;
+                }
+
+            }
+        } catch (NullPointerException e) {
+            e.printStackTrace();
+        }
 //        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P){
 //
 //       }
-//  mMap.moveCamera(CameraUpdateFactory.newLatLng(sydney));
+        Log.d("test", "total=" + total);
+        mMap.moveCamera(CameraUpdateFactory.newLatLng(sydney));
 
-        locationPoint();
+
 
     }
 
 
     private void locationPoint() {
-        double lat, lng;
+
         Log.i("test","媽!我在這！locationPoint() ");
 
 
@@ -249,19 +266,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     }
 
-    private void getCurrentLocation() {
-        boolean isGPSEnabled = lm.isProviderEnabled(LocationManager.GPS_PROVIDER);
-        boolean isNetworkEnabled = lm.isProviderEnabled(LocationManager.NETWORK_PROVIDER);
 
-        Location location = null;
-        if (!(isGPSEnabled || isNetworkEnabled)) {
-            //  Snackbar.make(mMapView, R.string.error_location_provider, Snackbar.LENGTH_INDEFINITE).show();
-        }else {
-
-        }
-        if (location != null)
-            drawMarker(location);
-    }
 
     /* 在Google Map上放上目前位置的地標圖示。 */
     private void drawMarker(Location location) {
